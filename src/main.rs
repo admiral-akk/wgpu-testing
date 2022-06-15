@@ -5,6 +5,7 @@ mod image_writer;
 use crate::color::Color;
 use crate::dimensions::Dimensions;
 use crate::image_writer::ImageWriter;
+
 fn main() {
     let dimensions = Dimensions::new(200, 200);
     let mut image = ImageWriter::new(dimensions);
@@ -19,5 +20,4 @@ fn main() {
         }
     }
     image.write_image().expect("Writing image failed!");
-    println!("Hello, world!");
 }
