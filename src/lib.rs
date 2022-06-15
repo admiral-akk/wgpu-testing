@@ -1,9 +1,12 @@
 use color::Color;
 use dimensions::Dimensions;
+use gpu::gpu::GPU;
 use image_writer::ImageWriter;
 
+use crate::gpu::copy_val;
 mod color;
 mod dimensions;
+mod gpu;
 mod image_writer;
 
 pub fn write_test_image() {
@@ -20,4 +23,9 @@ pub fn write_test_image() {
         }
     }
     image.write_image().expect("Writing image failed!");
+}
+
+pub fn init_gpu_compute_shader(input: &Vec<u8>) -> Vec<u8> {
+    let gpu: GPU = pollster::block_on(GPU::new());
+    return copy_val::copy_val(&gpu, input);
 }
