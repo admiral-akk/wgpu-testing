@@ -25,7 +25,7 @@ pub fn write_test_image() {
     image.write_image().expect("Writing image failed!");
 }
 
-pub fn init_gpu_compute_shader(input: &Vec<u8>) -> Vec<u8> {
+pub fn copy_via_gpu(input: Vec<u8>) -> Vec<u8> {
     let gpu: GPU = pollster::block_on(GPU::new());
-    return copy_val::copy_val(&gpu, input);
+    return copy_val::copy_val(&gpu, &input);
 }
