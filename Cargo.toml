@@ -1,0 +1,24 @@
+[package]
+name = "wgpu-testing"
+version = "0.1.0"
+edition = "2021"
+authors = ["Kuba Karpierz <mr.karpierz@gmail.com>"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name =  "wgpu-testing"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[profile.dev]
+opt-level = 3
+[profile.test]
+opt-level = 3
+[profile.release]
+opt-level = 3
