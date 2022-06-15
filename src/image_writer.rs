@@ -22,7 +22,7 @@ impl ImageWriter {
     }
 
     pub fn write_image(&mut self) -> std::io::Result<()> {
-        let mut file = File::create("image.ppm")?;
+        let mut file = File::create("output/image.ppm")?;
         file.write(
             format!(
                 "P3\n{} {}\n255\n",
