@@ -8,10 +8,14 @@ impl GPU {
     pub async fn new() -> GPU {
         let instance = wgpu::Instance::new(wgpu::Backends::all());
 
+        for x in instance.enumerate_adapters(wgpu::Backends::all()) {
+            println!("{}", x.get_info().name);
+        }
+
         // The adapter is our interface to the GPU
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::default(),
-            force_fallback_adapter: true,
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            force_fallback_adapter: false,
             compatible_surface: None,
         }))
         .unwrap();
@@ -21,9 +25,10 @@ impl GPU {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: None,
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::downlevel_webgl2_defaults(),
+                    label: Some("Device"),
+                    features: wgpu::Features::BUFFER_BINDING_ARRAY
+                        | wgpu::Features::STORAGE_RESOURCE_BINDING_ARRAY,
+                    limits: wgpu::Limits::default(),
                 },
                 None,
             )
@@ -40,7 +45,7 @@ impl GPU {
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: input.len() as u64,
-            usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::all(),
             mapped_at_creation: false,
         });
         self.queue.write_buffer(&buffer, 0, &input);
@@ -51,7 +56,7 @@ impl GPU {
         return self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: len,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            usage: wgpu::BufferUsages::all(),
             mapped_at_creation: false,
         });
     }

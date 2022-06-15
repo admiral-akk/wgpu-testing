@@ -1,6 +1,8 @@
+use std::str::Bytes;
+
 use color::Color;
 use dimensions::Dimensions;
-use gpu::gpu::GPU;
+use gpu::{basic_compute, gpu::GPU};
 use image_writer::ImageWriter;
 
 use crate::gpu::copy_val;
@@ -30,6 +32,22 @@ pub fn copy_via_gpu(input: Vec<u8>) -> Vec<u8> {
     return copy_val::copy_val(&gpu, &input);
 }
 
-pub fn apply_basic_compute_shader(input: Vec<u8>) -> Vec<u8> {
-    return input;
+pub fn apply_basic_compute_shader(input: Vec<u32>) -> Vec<u32> {
+    let mut u8Input: Vec<u8> = Vec::new();
+    for mut i in input {
+        for b in 0..4 {
+            u8Input.push(((i >> (8 * b)) & 255) as u8);
+        }
+    }
+    let gpu: GPU = pollster::block_on(GPU::new());
+    let output = basic_compute::basic_compute(&gpu, &u8Input);
+    let mut u32Out: Vec<u32> = Vec::new();
+    for i in 0..output.len() {
+        let index = i / 4;
+        if u32Out.len() <= index {
+            u32Out.push(0);
+        }
+        u32Out[index] = u32Out[index] + (i as u32) << ((i % 4) * 8);
+    }
+    return u32Out;
 }
