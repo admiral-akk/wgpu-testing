@@ -29,3 +29,7 @@ pub fn copy_via_gpu(input: Vec<u8>) -> Vec<u8> {
     let gpu: GPU = pollster::block_on(GPU::new());
     return copy_val::copy_val(&gpu, &input);
 }
+
+pub fn apply_basic_compute_shader(input: Vec<u8>) -> Vec<u8> {
+    return input;
+}

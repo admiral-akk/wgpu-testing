@@ -35,4 +35,38 @@ impl GPU {
             queue,
         }
     }
+
+    pub fn queue_write(&self, input: &[u8], label: Option<&str>) -> wgpu::Buffer {
+        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: label,
+            size: input.len() as u64,
+            usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        self.queue.write_buffer(&buffer, 0, &input);
+        return buffer;
+    }
+
+    pub fn read_buffer(&self, len: u64, label: Option<&str>) -> wgpu::Buffer {
+        return self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: label,
+            size: len,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+    }
+
+    pub fn command_encoder(&self, label: Option<&str>) -> wgpu::CommandEncoder {
+        return self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: label });
+    }
+
+    pub fn read_from<'a>(&self, read_buffer: &'a wgpu::Buffer) -> wgpu::BufferView<'a> {
+        let read_slice = read_buffer.slice(..);
+        let mapping = read_slice.map_async(wgpu::MapMode::Read);
+        self.device.poll(wgpu::Maintain::Wait);
+        pollster::block_on(mapping).unwrap();
+        return read_slice.get_mapped_range();
+    }
 }
