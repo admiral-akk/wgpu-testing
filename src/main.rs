@@ -10,4 +10,5 @@ fn main() {
     for val in output {
         println!("{}", val);
     }
+    write_test_image();
 }

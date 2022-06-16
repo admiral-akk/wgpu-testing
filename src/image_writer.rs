@@ -13,11 +13,11 @@ impl ImageWriter {
         Self { dimensions, colors }
     }
 
-    pub fn set_color(&mut self, x: usize, y: usize, color: Color) {
+    pub fn set_color(&mut self, x: u32, y: u32, color: Color) {
         *self.get_color(x, y) = color;
     }
 
-    fn get_color(&mut self, x: usize, y: usize) -> &mut Color {
+    fn get_color(&mut self, x: u32, y: u32) -> &mut Color {
         &mut self.colors[self.dimensions.index(x, y)]
     }
 
