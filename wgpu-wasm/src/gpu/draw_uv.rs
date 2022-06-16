@@ -2,7 +2,7 @@ use crate::structs::{color::Color, dimensions::Dimensions};
 
 use super::gpu::GPU;
 
-pub fn draw_uv(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
+pub async fn draw_uv(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
     let input_buffer = gpu.write_buffer_init_struct(dimensions, Some("Dimensions"));
     let output_size = std::mem::size_of::<Color>() * dimensions.size();
     let output_buffer = gpu.read_buffer(output_size as u64, Some("Color Output Buffer"));
@@ -54,5 +54,5 @@ pub fn draw_uv(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
 
     gpu.queue.submit([compute_commands]);
 
-    return gpu.read_from(&output_buffer).to_vec();
+    return gpu.read_from(&output_buffer).await.to_vec();
 }

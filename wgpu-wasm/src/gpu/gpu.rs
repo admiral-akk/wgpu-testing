@@ -12,17 +12,15 @@ impl GPU {
     pub async fn new() -> GPU {
         let instance = wgpu::Instance::new(wgpu::Backends::all());
 
-        for x in instance.enumerate_adapters(wgpu::Backends::all()) {
-            println!("{}", x.get_info().name);
-        }
-
         // The adapter is our interface to the GPU
-        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            force_fallback_adapter: false,
-            compatible_surface: None,
-        }))
-        .unwrap();
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                force_fallback_adapter: false,
+                compatible_surface: None,
+            })
+            .await
+            .unwrap();
 
         // The device creates compute/rendering resourses
         // The queue exectures CommandBuffers
@@ -157,11 +155,11 @@ impl GPU {
             })
     }
 
-    pub fn read_from<T: bytemuck::Pod>(&self, read_buffer: &wgpu::Buffer) -> Vec<T> {
+    pub async fn read_from<T: bytemuck::Pod>(&self, read_buffer: &wgpu::Buffer) -> Vec<T> {
         let read_slice = read_buffer.slice(..);
         let mapping = read_slice.map_async(wgpu::MapMode::Read);
         self.device.poll(wgpu::Maintain::Wait);
-        pollster::block_on(mapping).unwrap();
+        mapping.await.unwrap();
         return bytemuck::cast_slice(&read_slice.get_mapped_range()).to_vec();
     }
 }

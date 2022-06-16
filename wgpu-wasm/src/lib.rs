@@ -13,19 +13,19 @@ pub fn write_test_image(dimensions: &Dimensions) {
     write_image(dimensions, &colors, "test_image").expect("CPU Test Image Failed");
 }
 
-pub fn copy_via_gpu(input: Vec<u32>) -> Vec<u32> {
-    let gpu: GPU = pollster::block_on(GPU::new());
-    return copy_val::copy_val(&gpu, &input);
+pub async fn copy_via_gpu(input: Vec<u32>) -> Vec<u32> {
+    let gpu: GPU = GPU::new().await;
+    return copy_val::copy_val(&gpu, &input).await;
 }
 
-pub fn apply_basic_compute_shader(input: Vec<u32>) -> Vec<u32> {
-    let gpu: GPU = pollster::block_on(GPU::new());
-    return basic_compute::basic_compute(&gpu, &input);
+pub async fn apply_basic_compute_shader(input: Vec<u32>) -> Vec<u32> {
+    let gpu: GPU = GPU::new().await;
+    return basic_compute::basic_compute(&gpu, &input).await;
 }
 
-pub fn write_test_image_via_gpu(dimensions: &Dimensions) {
-    let gpu: GPU = pollster::block_on(GPU::new());
-    let colors = draw_uv(&gpu, dimensions);
+pub async fn write_test_image_via_gpu(dimensions: &Dimensions) {
+    let gpu: GPU = GPU::new().await;
+    let colors = draw_uv(&gpu, dimensions).await;
     write_image(dimensions, &colors, "gpu_uv").expect("GPU Test Image Failed");
 }
 
@@ -34,7 +34,7 @@ fn cpu_gpu_uv_match() {
     let dimensions = Dimensions::new(240, 300);
     let gpu: GPU = pollster::block_on(GPU::new());
 
-    let gpu_color = draw_uv(&gpu, &dimensions);
+    let gpu_color = pollster::block_on(draw_uv(&gpu, &dimensions));
     let cpu_color = test_uv(&dimensions);
     for i in 0..dimensions.size() {
         assert_eq!(cpu_color[i], gpu_color[i]);
