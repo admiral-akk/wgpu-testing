@@ -1,3 +1,7 @@
+use std::num::NonZeroU32;
+
+use wgpu::{BindGroupLayoutEntry, Buffer, ShaderModule};
+
 pub struct GPU {
     pub adapter: wgpu::Adapter,
     pub device: wgpu::Device,
@@ -41,7 +45,16 @@ impl GPU {
         }
     }
 
-    pub fn queue_write<T: bytemuck::Pod>(&self, input: &[T], label: Option<&str>) -> wgpu::Buffer {
+    fn queue_write<T: bytemuck::Pod>(&self, input: &[T], buffer: &wgpu::Buffer) {
+        self.queue
+            .write_buffer(&buffer, 0, &bytemuck::cast_slice(&input));
+    }
+
+    pub fn write_buffer_init<T: bytemuck::Pod>(
+        &self,
+        input: &[T],
+        label: Option<&str>,
+    ) -> wgpu::Buffer {
         let bytes: &[u8] = bytemuck::cast_slice(&input);
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
@@ -49,8 +62,7 @@ impl GPU {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        self.queue
-            .write_buffer(&buffer, 0, &bytemuck::cast_slice(&bytes));
+        self.queue_write(bytes, &buffer);
         return buffer;
     }
 
@@ -67,6 +79,66 @@ impl GPU {
         return self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: label });
+    }
+
+    pub fn shader_module(&self, wgsl_code: &str, label: Option<&str>) -> wgpu::ShaderModule {
+        self.device
+            .create_shader_module(&wgpu::ShaderModuleDescriptor {
+                label: label,
+                source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(wgsl_code)),
+            })
+    }
+
+    pub fn bind_group_layout_entry(
+        &self,
+        binding: u32,
+        read_only: bool,
+        is_array: bool,
+    ) -> BindGroupLayoutEntry {
+        let mut count: Option<NonZeroU32> = None;
+        if is_array {
+            count = Some(NonZeroU32::new(1).unwrap());
+        }
+        wgpu::BindGroupLayoutEntry {
+            binding: binding,
+            visibility: wgpu::ShaderStages::COMPUTE,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Storage {
+                    read_only: read_only,
+                },
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: count,
+        }
+    }
+    pub fn bind_group_entry<'a>(
+        &self,
+        binding: u32,
+        buffer: &'a Buffer,
+    ) -> wgpu::BindGroupEntry<'a> {
+        wgpu::BindGroupEntry {
+            binding: binding,
+            resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                buffer: &buffer,
+                offset: 0,
+                size: None,
+            }),
+        }
+    }
+    pub fn compute_pipeline(
+        &self,
+        pipeline_layout: &wgpu::PipelineLayout,
+        shader_module: &ShaderModule,
+        label: Option<&str>,
+    ) -> wgpu::ComputePipeline {
+        self.device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: label,
+                layout: Some(pipeline_layout),
+                module: shader_module,
+                entry_point: "main",
+            })
     }
 
     pub fn read_from<T: bytemuck::Pod>(&self, read_buffer: &wgpu::Buffer) -> Vec<T> {

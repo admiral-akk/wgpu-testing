@@ -2,7 +2,7 @@ use super::gpu::GPU;
 
 pub fn copy_val<T: bytemuck::Pod>(gpu: &GPU, input: &[T]) -> Vec<u32> {
     let input_size = (std::mem::size_of::<T>() as u64) * (input.len() as u64);
-    let input_buffer = gpu.queue_write(input, Some("Write Buffer"));
+    let input_buffer = gpu.write_buffer_init(input, Some("Write Buffer"));
     let output_buffer = gpu.read_buffer(input_size, Some("Read Buffer"));
 
     let mut copy_encoder = gpu.command_encoder(Some("Copy Encoder"));
