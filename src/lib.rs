@@ -1,5 +1,4 @@
 use gpu::{basic_compute, draw_uv::draw_uv, gpu::GPU};
-use structs::color::Color;
 use structs::dimensions::Dimensions;
 use utils::write_image::write_image;
 
@@ -11,7 +10,7 @@ mod utils;
 
 pub fn write_test_image(dimensions: &Dimensions) {
     let colors = test_uv(dimensions);
-    write_image(dimensions, &colors, "test_image");
+    write_image(dimensions, &colors, "test_image").expect("CPU Test Image Failed");
 }
 
 pub fn copy_via_gpu(input: Vec<u32>) -> Vec<u32> {
@@ -27,7 +26,7 @@ pub fn apply_basic_compute_shader(input: Vec<u32>) -> Vec<u32> {
 pub fn write_test_image_via_gpu(dimensions: &Dimensions) {
     let gpu: GPU = pollster::block_on(GPU::new());
     let colors = draw_uv(&gpu, dimensions);
-    write_image(dimensions, &colors, "gpu_uv");
+    write_image(dimensions, &colors, "gpu_uv").expect("GPU Test Image Failed");
 }
 
 #[test]
