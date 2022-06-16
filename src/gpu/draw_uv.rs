@@ -1,7 +1,4 @@
-use crate::{
-    color::Color,
-    dimensions::{self, Dimensions},
-};
+use crate::structs::{color::Color, dimensions::Dimensions};
 
 use super::gpu::GPU;
 

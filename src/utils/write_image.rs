@@ -1,6 +1,6 @@
 use std::{fs::File, io::Write};
 
-use crate::{color::Color, dimensions::Dimensions};
+use crate::structs::{color::Color, dimensions::Dimensions};
 
 pub fn write_image(
     dimensions: &Dimensions,

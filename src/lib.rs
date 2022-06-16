@@ -1,16 +1,16 @@
-use color::Color;
-use dimensions::Dimensions;
 use gpu::{basic_compute, draw_uv::draw_uv, gpu::GPU};
+use structs::color::Color;
+use structs::dimensions::Dimensions;
 use utils::write_image::write_image;
 
 use crate::gpu::copy_val;
-mod color;
-pub mod dimensions;
+use utils::test_uv::test_uv;
 mod gpu;
+pub mod structs;
 mod utils;
 
 pub fn write_test_image(dimensions: &Dimensions) {
-    let colors = Color::test_uv(&dimensions);
+    let colors = test_uv(dimensions);
     write_image(dimensions, &colors, "test_image");
 }
 
@@ -36,7 +36,7 @@ fn cpu_gpu_uv_match() {
     let gpu: GPU = pollster::block_on(GPU::new());
 
     let gpu_color = draw_uv(&gpu, &dimensions);
-    let cpu_color = Color::test_uv(&dimensions);
+    let cpu_color = test_uv(&dimensions);
     for i in 0..dimensions.size() {
         assert_eq!(cpu_color[i], gpu_color[i]);
     }

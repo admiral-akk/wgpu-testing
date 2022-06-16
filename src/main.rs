@@ -1,5 +1,5 @@
 use wgpu_testing::{
-    apply_basic_compute_shader, copy_via_gpu, dimensions::Dimensions, write_test_image,
+    apply_basic_compute_shader, copy_via_gpu, structs::dimensions::Dimensions, write_test_image,
     write_test_image_via_gpu,
 };
 
