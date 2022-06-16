@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "wgpu-wasm",
+    "wgpu-lib",
     "run-wasm",
     "wgpu-local",
     "wgpu-web",

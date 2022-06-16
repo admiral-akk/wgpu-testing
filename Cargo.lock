@@ -1051,11 +1051,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "wgpu-lib"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "pollster",
+ "wgpu",
+]
+
+[[package]]
 name = "wgpu-local"
 version = "0.1.0"
 dependencies = [
  "pollster",
- "wgpu-wasm",
+ "wgpu-lib",
 ]
 
 [[package]]
@@ -1068,19 +1077,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "wgpu-wasm"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "pollster",
- "wgpu",
-]
-
-[[package]]
 name = "wgpu-web"
 version = "0.1.0"
 dependencies = [
- "wgpu-wasm",
+ "wgpu-lib",
 ]
 
 [[package]]
