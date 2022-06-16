@@ -46,7 +46,7 @@ impl GPU {
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: bytes.len() as u64,
-            usage: wgpu::BufferUsages::all(),
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
         self.queue
@@ -58,7 +58,7 @@ impl GPU {
         return self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: len,
-            usage: wgpu::BufferUsages::all(),
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::MAP_READ,
             mapped_at_creation: false,
         });
     }
@@ -74,6 +74,6 @@ impl GPU {
         let mapping = read_slice.map_async(wgpu::MapMode::Read);
         self.device.poll(wgpu::Maintain::Wait);
         pollster::block_on(mapping).unwrap();
-        return bytemuck::cast_slice(&read_slice.get_mapped_range().to_vec()).to_vec();
+        return bytemuck::cast_slice(&read_slice.get_mapped_range()).to_vec();
     }
 }
