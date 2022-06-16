@@ -1,5 +1,5 @@
 use gpu::{basic_compute, draw_uv::draw_uv, gpu::GPU};
-use structs::dimensions::Dimensions;
+use structs::{color::Color, dimensions::Dimensions};
 use utils::write_image::write_image;
 
 use crate::gpu::copy_val;
@@ -11,6 +11,10 @@ mod utils;
 pub fn write_test_image(dimensions: &Dimensions) {
     let colors = test_uv(dimensions);
     write_image(dimensions, &colors, "test_image").expect("CPU Test Image Failed");
+}
+
+pub fn get_colors(dimensions: &Dimensions) -> Vec<Color> {
+    test_uv(dimensions)
 }
 
 pub async fn copy_via_gpu(input: Vec<u32>) -> Vec<u32> {

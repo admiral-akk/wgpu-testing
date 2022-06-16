@@ -4,7 +4,9 @@ extern crate wasm_bindgen;
 mod utils;
 
 use cfg_if::cfg_if;
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{prelude::*, JsCast};
+use web_sys::{CanvasRenderingContext2d, Document, Element, HtmlCanvasElement, ImageData};
+use wgpu_lib::structs::dimensions::Dimensions;
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -21,7 +23,70 @@ extern "C" {
     fn alert(s: &str);
 }
 
-#[wasm_bindgen(start)]
+#[wasm_bindgen]
 pub fn greet() {
     alert("Hello, wasm-game-of-life!");
+}
+
+fn make_canvas(canvas: Element, dimensions: &Dimensions) -> Option<CanvasRenderingContext2d> {
+    let canvas: web_sys::HtmlCanvasElement = canvas
+        .dyn_into::<web_sys::HtmlCanvasElement>()
+        .map_err(|_| ())
+        .unwrap();
+
+    return Some(
+        canvas
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
+            .dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .unwrap(),
+    );
+}
+
+use wasm_bindgen::Clamped;
+
+fn color(dimensions: &Dimensions) -> Result<ImageData, JsValue> {
+    let mut u8Vec: Vec<u8> = Vec::new();
+    let c = wgpu_lib::get_colors(&dimensions);
+    for y in (0..dimensions.height).rev() {
+        for x in 0..dimensions.width {
+            let (r, g, b, a) = c[dimensions.index(x, y)].to_rgba();
+            u8Vec.push(r);
+            u8Vec.push(g);
+            u8Vec.push(b);
+            u8Vec.push(a);
+        }
+    }
+    ImageData::new_with_u8_clamped_array_and_sh(
+        Clamped(&mut u8Vec),
+        dimensions.width,
+        dimensions.height,
+    )
+}
+
+#[wasm_bindgen(start)]
+pub fn run() -> Result<(), JsValue> {
+    // Use `web_sys`'s global `window` function to get a handle on the global
+    // window object.
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
+    let body = document.body().expect("document should have a body");
+    let canvas = document.create_element("canvas")?;
+
+    let dimensions = Dimensions::new(400, 400);
+    body.append_child(&canvas)?;
+    canvas.set_attribute("width", &dimensions.width.to_string())?;
+    canvas.set_attribute("height", &dimensions.height.to_string())?;
+
+    // Manufacture the element we're gonna append
+    let val = document.create_element("p")?;
+    val.set_text_content(Some("Hello from Rust!"));
+
+    let render_context = make_canvas(canvas, &dimensions).unwrap();
+
+    let image = color(&dimensions)?;
+    render_context.put_image_data(&image, 0.0, 0.0)?;
+
+    Ok(())
 }

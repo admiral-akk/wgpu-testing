@@ -1,5 +1,5 @@
-use wgpu_web::greet;
+use wgpu_web::run;
 
 fn main() {
-    greet();
+    //run();
 }

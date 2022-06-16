@@ -1148,6 +1148,7 @@ dependencies = [
  "console_error_panic_hook",
  "wasm-bindgen",
  "wasm-bindgen-test",
+ "web-sys",
  "wee_alloc",
  "wgpu-lib",
 ]
