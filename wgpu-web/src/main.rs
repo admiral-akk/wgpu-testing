@@ -1,3 +1,5 @@
+use wgpu_web::greet;
+
 fn main() {
-    println!("Hello, world!");
+    greet();
 }
