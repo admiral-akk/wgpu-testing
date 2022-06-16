@@ -1,14 +1,10 @@
-mod color;
-mod dimensions;
-mod image_writer;
-
-use wgpu_testing::{apply_basic_compute_shader, copy_via_gpu, write_test_image};
+use wgpu_testing::{
+    apply_basic_compute_shader, copy_via_gpu, dimensions::Dimensions, write_test_image,
+    write_test_image_via_gpu,
+};
 
 fn main() {
-    let input: Vec<u32> = vec![2, 4, 8, 16, 0, 4, 2];
-    let output = apply_basic_compute_shader(input);
-    for val in output {
-        println!("{}", val);
-    }
-    write_test_image();
+    let dimensions = Dimensions::new(300, 200);
+    write_test_image_via_gpu(&dimensions);
+    write_test_image(&dimensions);
 }

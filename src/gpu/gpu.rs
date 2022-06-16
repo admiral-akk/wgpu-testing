@@ -50,12 +50,28 @@ impl GPU {
             .write_buffer(&buffer, 0, &bytemuck::cast_slice(&input));
     }
 
-    pub fn write_buffer_init<T: bytemuck::Pod>(
+    pub fn write_buffer_init_array<T: bytemuck::Pod>(
         &self,
         input: &[T],
         label: Option<&str>,
     ) -> wgpu::Buffer {
-        let bytes: &[u8] = bytemuck::cast_slice(&input);
+        let bytes: &[u8] = bytemuck::cast_slice(input);
+        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: label,
+            size: bytes.len() as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        self.queue_write(bytes, &buffer);
+        return buffer;
+    }
+
+    pub fn write_buffer_init_struct<T: bytemuck::Pod>(
+        &self,
+        input: &T,
+        label: Option<&str>,
+    ) -> wgpu::Buffer {
+        let bytes: &[u8] = bytemuck::bytes_of(input);
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: bytes.len() as u64,

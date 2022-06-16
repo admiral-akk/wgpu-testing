@@ -1,7 +1,7 @@
 use super::gpu::GPU;
 
 pub fn basic_compute(gpu: &GPU, input: &[u32]) -> Vec<u32> {
-    let input_buffer = gpu.write_buffer_init(input, Some("Write Buffer"));
+    let input_buffer = gpu.write_buffer_init_array(input, Some("Write Buffer"));
     let input_size = (std::mem::size_of::<u32>() as u64) * (input.len() as u64);
     let output_buffer = gpu.read_buffer(input_size, Some("Read Buffer"));
 
