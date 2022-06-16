@@ -41,14 +41,16 @@ impl GPU {
         }
     }
 
-    pub fn queue_write(&self, input: &[u8], label: Option<&str>) -> wgpu::Buffer {
+    pub fn queue_write<T: bytemuck::Pod>(&self, input: &[T], label: Option<&str>) -> wgpu::Buffer {
+        let bytes: &[u8] = bytemuck::cast_slice(&input);
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
-            size: input.len() as u64,
+            size: bytes.len() as u64,
             usage: wgpu::BufferUsages::all(),
             mapped_at_creation: false,
         });
-        self.queue.write_buffer(&buffer, 0, &input);
+        self.queue
+            .write_buffer(&buffer, 0, &bytemuck::cast_slice(&bytes));
         return buffer;
     }
 
@@ -67,11 +69,11 @@ impl GPU {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: label });
     }
 
-    pub fn read_from<'a>(&self, read_buffer: &'a wgpu::Buffer) -> wgpu::BufferView<'a> {
+    pub fn read_from<T: bytemuck::Pod>(&self, read_buffer: &wgpu::Buffer) -> Vec<T> {
         let read_slice = read_buffer.slice(..);
         let mapping = read_slice.map_async(wgpu::MapMode::Read);
         self.device.poll(wgpu::Maintain::Wait);
         pollster::block_on(mapping).unwrap();
-        return read_slice.get_mapped_range();
+        return bytemuck::cast_slice(&read_slice.get_mapped_range().to_vec()).to_vec();
     }
 }

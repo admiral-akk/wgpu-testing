@@ -4,9 +4,10 @@ use wgpu::{BindGroupLayout, BufferBinding};
 
 use super::gpu::GPU;
 
-pub fn basic_compute(gpu: &GPU, input: &[u8]) -> Vec<u8> {
+pub fn basic_compute(gpu: &GPU, input: &[u32]) -> Vec<u32> {
     let input_buffer = gpu.queue_write(input, Some("Write Buffer"));
-    let output_buffer = gpu.read_buffer(input.len() as u64, Some("Read Buffer"));
+    let input_size = (std::mem::size_of::<u32>() as u64) * (input.len() as u64);
+    let output_buffer = gpu.read_buffer(input_size, Some("Read Buffer"));
 
     let mut bindGroupLayout =
         gpu.device
@@ -93,7 +94,7 @@ pub fn basic_compute(gpu: &GPU, input: &[u8]) -> Vec<u8> {
 
         compute_pass.set_pipeline(&compute_pipeline);
         compute_pass.set_bind_group(0, &bindGroup, &[]);
-        compute_pass.dispatch(4, 1, 1);
+        compute_pass.dispatch(input_size as u32, 1, 1);
     }
     let mut compute_commands = command_encoder.finish();
 

@@ -10,5 +10,5 @@ fn main([[builtin(global_invocation_id)]] global_id : vec3<u32>) {
     if (global_id.x >= arrayLength(&input.vals)) {
     return;
     }
-    output.vals[global_id.x] =  input.vals[global_id.x];
+    output.vals[global_id.x] = 1u + input.vals[global_id.x];
 }
