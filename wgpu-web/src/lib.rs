@@ -23,12 +23,7 @@ extern "C" {
     fn alert(s: &str);
 }
 
-#[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, wasm-game-of-life!");
-}
-
-fn make_canvas(canvas: Element, dimensions: &Dimensions) -> Option<CanvasRenderingContext2d> {
+fn make_canvas(canvas: Element) -> Option<CanvasRenderingContext2d> {
     let canvas: web_sys::HtmlCanvasElement = canvas
         .dyn_into::<web_sys::HtmlCanvasElement>()
         .map_err(|_| ())
@@ -79,7 +74,7 @@ pub async fn run() -> Result<(), JsValue> {
     canvas.set_attribute("width", &dimensions.width.to_string())?;
     canvas.set_attribute("height", &dimensions.height.to_string())?;
 
-    let render_context = make_canvas(canvas, &dimensions).unwrap();
+    let render_context = make_canvas(canvas).unwrap();
 
     let image = color(&dimensions, &colors)?;
     render_context.put_image_data(&image, 0.0, 0.0)?;

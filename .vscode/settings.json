@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        "output/": true,
+        "target/": true
+    }
+}
