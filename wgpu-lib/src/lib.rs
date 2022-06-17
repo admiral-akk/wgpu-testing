@@ -1,9 +1,10 @@
-use gpu::{basic_compute, draw_uv::draw_uv, gpu::GPU};
+use examples::{basic_compute, copy_val::copy_val, draw_uv::draw_uv};
+use gpu::gpu::GPU;
 use structs::{color::Color, dimensions::Dimensions};
 use utils::write_image::write_image;
 
-use crate::gpu::copy_val;
 use utils::test_uv::test_uv;
+mod examples;
 mod gpu;
 pub mod structs;
 mod utils;
@@ -17,9 +18,14 @@ pub fn get_colors(dimensions: &Dimensions) -> Vec<Color> {
     test_uv(dimensions)
 }
 
+pub async fn get_colors_gpu(dimensions: &Dimensions) -> Vec<Color> {
+    let gpu: GPU = GPU::new().await;
+    draw_uv(&gpu, &dimensions).await
+}
+
 pub async fn copy_via_gpu(input: Vec<u32>) -> Vec<u32> {
     let gpu: GPU = GPU::new().await;
-    return copy_val::copy_val(&gpu, &input).await;
+    return copy_val(&gpu, &input).await;
 }
 
 pub async fn apply_basic_compute_shader(input: Vec<u32>) -> Vec<u32> {

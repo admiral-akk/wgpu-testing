@@ -57,7 +57,9 @@ impl GPU {
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: bytes.len() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::STORAGE
+                | wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
         self.queue_write(bytes, &buffer);
@@ -73,7 +75,9 @@ impl GPU {
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: bytes.len() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::STORAGE
+                | wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
         self.queue_write(bytes, &buffer);
@@ -84,7 +88,16 @@ impl GPU {
         return self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: len,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::MAP_READ,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+    }
+
+    pub fn staging_buffer(&self, len: u64, label: Option<&str>) -> wgpu::Buffer {
+        return self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: label,
+            size: len,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
     }

@@ -1147,6 +1147,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "console_error_panic_hook",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
  "wasm-bindgen-test",
  "web-sys",
  "wee_alloc",

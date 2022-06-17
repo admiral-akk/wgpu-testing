@@ -5,8 +5,8 @@ mod utils;
 
 use cfg_if::cfg_if;
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{CanvasRenderingContext2d, Document, Element, HtmlCanvasElement, ImageData};
-use wgpu_lib::structs::dimensions::Dimensions;
+use web_sys::{CanvasRenderingContext2d, Element, ImageData};
+use wgpu_lib::structs::{color::Color, dimensions::Dimensions};
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -46,12 +46,11 @@ fn make_canvas(canvas: Element, dimensions: &Dimensions) -> Option<CanvasRenderi
 
 use wasm_bindgen::Clamped;
 
-fn color(dimensions: &Dimensions) -> Result<ImageData, JsValue> {
+fn color(dimensions: &Dimensions, colors: &Vec<Color>) -> Result<ImageData, JsValue> {
     let mut u8Vec: Vec<u8> = Vec::new();
-    let c = wgpu_lib::get_colors(&dimensions);
     for y in (0..dimensions.height).rev() {
         for x in 0..dimensions.width {
-            let (r, g, b, a) = c[dimensions.index(x, y)].to_rgba();
+            let (r, g, b, a) = colors[dimensions.index(x, y)].to_rgba();
             u8Vec.push(r);
             u8Vec.push(g);
             u8Vec.push(b);
@@ -66,7 +65,7 @@ fn color(dimensions: &Dimensions) -> Result<ImageData, JsValue> {
 }
 
 #[wasm_bindgen(start)]
-pub fn run() -> Result<(), JsValue> {
+pub async fn run() -> Result<(), JsValue> {
     // Use `web_sys`'s global `window` function to get a handle on the global
     // window object.
     let window = web_sys::window().expect("no global `window` exists");
@@ -75,17 +74,14 @@ pub fn run() -> Result<(), JsValue> {
     let canvas = document.create_element("canvas")?;
 
     let dimensions = Dimensions::new(400, 400);
+    let colors = wgpu_lib::get_colors_gpu(&dimensions).await;
     body.append_child(&canvas)?;
     canvas.set_attribute("width", &dimensions.width.to_string())?;
     canvas.set_attribute("height", &dimensions.height.to_string())?;
 
-    // Manufacture the element we're gonna append
-    let val = document.create_element("p")?;
-    val.set_text_content(Some("Hello from Rust!"));
-
     let render_context = make_canvas(canvas, &dimensions).unwrap();
 
-    let image = color(&dimensions)?;
+    let image = color(&dimensions, &colors)?;
     render_context.put_image_data(&image, 0.0, 0.0)?;
 
     Ok(())

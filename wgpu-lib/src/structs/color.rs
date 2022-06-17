@@ -12,6 +12,9 @@ impl Color {
             rgba: ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | 255,
         }
     }
+    pub fn new32(rgba: u32) -> Self {
+        Self { rgba }
+    }
 
     pub fn to_rgba(&self) -> (u8, u8, u8, u8) {
         (

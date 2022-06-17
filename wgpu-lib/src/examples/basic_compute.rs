@@ -1,19 +1,17 @@
-use crate::structs::{color::Color, dimensions::Dimensions};
+use crate::gpu::gpu::GPU;
 
-use super::gpu::GPU;
-
-pub async fn draw_uv(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
-    let input_buffer = gpu.write_buffer_init_struct(dimensions, Some("Dimensions"));
-    let output_size = std::mem::size_of::<Color>() * dimensions.size();
-    let output_buffer = gpu.read_buffer(output_size as u64, Some("Color Output Buffer"));
+pub async fn basic_compute(gpu: &GPU, input: &[u32]) -> Vec<u32> {
+    let input_buffer = gpu.write_buffer_init_array(input, Some("Write Buffer"));
+    let input_size = (std::mem::size_of::<u32>() as u64) * (input.len() as u64);
+    let output_buffer = gpu.read_buffer(input_size, Some("Read Buffer"));
 
     let bind_group_layout = gpu
         .device
         .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Bind Group Layout"),
             entries: &[
-                gpu.bind_group_layout_entry(0, true, false),
-                gpu.bind_group_layout_entry(1, false, false),
+                gpu.bind_group_layout_entry(0, true, true),
+                gpu.bind_group_layout_entry(1, false, true),
             ],
         });
 
@@ -25,6 +23,7 @@ pub async fn draw_uv(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
             gpu.bind_group_entry(1, &output_buffer),
         ],
     });
+
     let pipeline_layout = gpu
         .device
         .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -33,12 +32,11 @@ pub async fn draw_uv(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
             push_constant_ranges: &[],
         });
 
-    let shader_module = gpu.shader_module(include_str!("draw_uv.wgsl"), Some("Shader Module"));
+    let shader_module =
+        gpu.shader_module(include_str!("basic_compute.wgsl"), Some("Shader Module"));
 
     let compute_pipeline =
         gpu.compute_pipeline(&pipeline_layout, &shader_module, Some("Compute Pipeline"));
-
-    let group_count = 128;
 
     let mut command_encoder = gpu.command_encoder(Some("Command Encoder"));
     {
@@ -48,7 +46,7 @@ pub async fn draw_uv(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
 
         compute_pass.set_pipeline(&compute_pipeline);
         compute_pass.set_bind_group(0, &bind_group, &[]);
-        compute_pass.dispatch(group_count, 1, 1);
+        compute_pass.dispatch(input_size as u32, 1, 1);
     }
     let compute_commands = command_encoder.finish();
 

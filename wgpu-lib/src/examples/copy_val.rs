@@ -1,4 +1,4 @@
-use super::gpu::GPU;
+use crate::gpu::gpu::GPU;
 
 pub async fn copy_val<T: bytemuck::Pod>(gpu: &GPU, input: &[T]) -> Vec<u32> {
     let input_size = (std::mem::size_of::<T>() as u64) * (input.len() as u64);
