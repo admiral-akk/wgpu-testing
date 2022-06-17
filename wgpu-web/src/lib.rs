@@ -69,7 +69,7 @@ pub async fn run() -> Result<(), JsValue> {
     let canvas = document.create_element("canvas")?;
 
     let dimensions = Dimensions::new(400, 400);
-    let colors = wgpu_lib::get_colors_gpu(&dimensions).await;
+    let colors = wgpu_lib::get_ray_trace(&dimensions).await;
     body.append_child(&canvas)?;
     canvas.set_attribute("width", &dimensions.width.to_string())?;
     canvas.set_attribute("height", &dimensions.height.to_string())?;

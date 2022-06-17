@@ -75,9 +75,7 @@ impl GPU {
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: label,
             size: bytes.len() as u64,
-            usage: wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST
-                | wgpu::BufferUsages::COPY_SRC,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
         self.queue_write(bytes, &buffer);
@@ -119,6 +117,7 @@ impl GPU {
     pub fn bind_group_layout_entry(
         &self,
         binding: u32,
+        is_storage: bool,
         read_only: bool,
         is_array: bool,
     ) -> BindGroupLayoutEntry {
@@ -126,13 +125,17 @@ impl GPU {
         if is_array {
             count = Some(NonZeroU32::new(1).unwrap());
         }
+        let mut binding_type = wgpu::BufferBindingType::Storage {
+            read_only: read_only,
+        };
+        if !is_storage {
+            binding_type = wgpu::BufferBindingType::Uniform;
+        }
         wgpu::BindGroupLayoutEntry {
             binding: binding,
             visibility: wgpu::ShaderStages::COMPUTE,
             ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Storage {
-                    read_only: read_only,
-                },
+                ty: binding_type,
                 has_dynamic_offset: false,
                 min_binding_size: None,
             },

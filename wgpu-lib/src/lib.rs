@@ -1,11 +1,13 @@
 use examples::{basic_compute, copy_val::copy_val, draw_uv::draw_uv};
 use gpu::gpu::GPU;
+use ray_tracing::ray_trace::ray_trace;
 use structs::{color::Color, dimensions::Dimensions};
 use utils::write_image::write_image;
 
 use utils::test_uv::test_uv;
 mod examples;
 mod gpu;
+mod ray_tracing;
 pub mod structs;
 mod utils;
 
@@ -16,6 +18,11 @@ pub fn write_test_image(dimensions: &Dimensions) {
 
 pub fn get_colors(dimensions: &Dimensions) -> Vec<Color> {
     test_uv(dimensions)
+}
+
+pub async fn get_ray_trace(dimensions: &Dimensions) -> Vec<Color> {
+    let gpu: GPU = GPU::new().await;
+    ray_trace(&gpu, dimensions).await
 }
 
 pub async fn get_colors_gpu(dimensions: &Dimensions) -> Vec<Color> {

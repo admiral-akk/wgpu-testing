@@ -10,8 +10,8 @@ pub async fn basic_compute(gpu: &GPU, input: &[u32]) -> Vec<u32> {
         .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Bind Group Layout"),
             entries: &[
-                gpu.bind_group_layout_entry(0, true, true),
-                gpu.bind_group_layout_entry(1, false, true),
+                gpu.bind_group_layout_entry(0, true, true, true),
+                gpu.bind_group_layout_entry(1, true, false, true),
             ],
         });
 
