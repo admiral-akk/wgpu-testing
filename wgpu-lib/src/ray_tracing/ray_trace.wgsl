@@ -42,13 +42,16 @@ struct Ray {
 @group(0) @binding(3) var<storage, read_write> output : Colors;
 
 // x/y in [0,1]
-fn camera_ray(x:f32, y:f32) -> Ray {
+fn camera_ray(index: u32) -> Ray {
+    let x : u32 = index % dimensions.width;
+    let y : u32 = index / dimensions.width;
+    let view_x = f32(x) / f32(dimensions.width - 1);
+    let view_y = f32(y) / f32(dimensions.height - 1);
     let y_len : f32 = atan(camera.vertical_fov / 2);
     let x_len : f32 = camera.aspect_ratio * y_len;
-    let dir_x : f32 = 2.0 * (x - 0.5) * x_len;
-    let dir_y : f32 = 2.0 * (y - 0.5) * y_len;
+    let dir_x : f32 = 2.0 * (view_x - 0.5) * x_len;
+    let dir_y : f32 = 2.0 * (view_y - 0.5) * y_len;
     let dir_z : f32 = 1.0;
-
     let dir : vec3<f32> = normalize(vec3(dir_x, dir_y, dir_z));
    return Ray(vec3(camera.x,camera.y,camera.z), dir);
 }
@@ -66,6 +69,24 @@ fn ray_collides(ray: Ray) -> f32 {
     return 10.0;
 }
 
+
+
+fn to_color_int(val: f32, offset: u32) -> u32 {
+    return (u32(clamp(255.0 * val, 0.0, 255.0)) & 255u) << offset;
+}
+
+fn to_color(color: vec3<f32>) -> u32 {
+    return to_color_int(color.x, 24u) |  to_color_int(color.y, 16u) | to_color_int(color.z, 8u) | 255u;
+}
+
+let LIGHT_BLUE : vec3<f32> = vec3<f32>(0.5, 0.7, 1.0);
+let WHITE : vec3<f32> = vec3<f32>(1.0, 1.0, 1.0);
+
+fn sky_color(ray_dir: vec3<f32>) -> u32 {
+    let color = mix(LIGHT_BLUE, WHITE, vec3<f32>(ray_dir.y, ray_dir.y, ray_dir.y));
+    return to_color(color);
+}
+
 @compute
 @workgroup_size(128,1,1)
 fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
@@ -75,18 +96,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
     }
     let work_size : u32 = arrayLength(&output.colors) / 128u;
     for (var index : u32 = global_id.x * work_size; index < (global_id.x + 1u) * work_size; index = index + 1u) {
-        let x : u32 = index % dimensions.width;
-        let y : u32 = index / dimensions.width;
-        let view_x = f32(x) / f32(dimensions.width - 1);
-        let view_y = f32(y) / f32(dimensions.height - 1);
-        let ray = camera_ray(view_x, view_y);
+        let ray = camera_ray(index);
         let ray_min_dist = ray_collides(ray);
-        let b : u32 = ((u32(255*(ray_min_dist)) & 255u) << 8u);
-        output.colors[index].rgba = b | 255;
-        if (ray_min_dist > 9.0) {
-            let r : u32 = ((((255u * x) / dimensions.width) & 255u) << 24u);
-            let g : u32 = ((((255u * y) / dimensions.height) & 255u) << 16u);
-            output.colors[index].rgba = r | g | 255;
-        } 
+        output.colors[index].rgba = sky_color(ray.dir);
     }
 }

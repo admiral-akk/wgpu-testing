@@ -74,6 +74,7 @@ pub async fn run() -> Result<(), JsValue> {
     let dimensions = Dimensions::new(400, 400);
     let mut world: Vec<Sphere> = Vec::new();
     world.push(Sphere::new(Vec3::new(0.0, 0.0, 10.0), 1.0));
+    world.push(Sphere::new(Vec3::new(3.0, 0.0, 20.0), 1.0));
 
     let colors = wgpu_lib::get_ray_trace(&dimensions, world).await;
     body.append_child(&canvas)?;
