@@ -43,33 +43,52 @@ struct Ray {
 
 // x/y in [0,1]
 fn camera_ray(index: u32) -> Ray {
-    let x : u32 = index % dimensions.width;
-    let y : u32 = index / dimensions.width;
-    let view_x = f32(x) / f32(dimensions.width - 1);
-    let view_y = f32(y) / f32(dimensions.height - 1);
-    let y_len : f32 = atan(camera.vertical_fov / 2);
-    let x_len : f32 = camera.aspect_ratio * y_len;
-    let dir_x : f32 = 2.0 * (view_x - 0.5) * x_len;
-    let dir_y : f32 = 2.0 * (view_y - 0.5) * y_len;
-    let dir_z : f32 = 1.0;
-    let dir : vec3<f32> = normalize(vec3(dir_x, dir_y, dir_z));
+   let x : u32 = index % dimensions.width;
+   let y : u32 = index / dimensions.width;
+   let view_x = f32(x) / f32(dimensions.width - 1);
+   let view_y = f32(y) / f32(dimensions.height - 1);
+   let y_len : f32 = atan(camera.vertical_fov / 2);
+   let x_len : f32 = camera.aspect_ratio * y_len;
+   let dir_x : f32 = 2.0 * (view_x - 0.5) * x_len;
+   let dir_y : f32 = 2.0 * (view_y - 0.5) * y_len;
+   let dir_z : f32 = 1.0;
+   let dir : vec3<f32> = normalize(vec3(dir_x, dir_y, dir_z));
    return Ray(vec3(camera.x,camera.y,camera.z), dir);
 }
 
-fn ray_collides(ray: Ray) -> f32 {
-    for (var i : u32 = 0; i < arrayLength(&world.spheres); i++) {
-        let sphere : Sphere = world.spheres[i];
-        let p : vec3<f32> = (sphere.pos - ray.pos);
-        let r : vec3<f32> = dot(ray.dir, p) * ray.dir - p;
-        let r_dist : f32 = length(r);
-        if (r_dist <= sphere.radius) {
-            return r_dist;
-        }
-    }
-    return 10.0;
+fn ray_collision_times(ray: Ray, closest_point: vec3<f32>, sphere: Sphere) -> vec2<f32> {
+    let rad_sq : f32 = sphere.radius * sphere.radius;
+    let dist_sq :f32 = pow(length(closest_point), 2);
+    let dist_back :f32 = sqrt(rad_sq - dist_sq);
+    let early_collision : vec3<f32> = closest_point + sphere.pos - dist_back * ray.dir;
+    let early_collision_time = dot(early_collision - ray.pos, ray.dir );
+    return  vec2<f32>(early_collision_time, early_collision_time+2*dist_back);
+}
+
+fn sphere_normal(sphere: Sphere, ray:Ray, collision_time:f32) -> vec3<f32> {
+    return normalize(ray.dir * collision_time - sphere.pos);
 }
 
 
+fn ray_collides(ray: Ray) -> vec4<f32> {
+    for (var i : u32 = 0; i < arrayLength(&world.spheres); i++) {
+        let sphere : Sphere = world.spheres[i];
+        let p : vec3<f32> = (sphere.pos - ray.pos);
+        let closest_point : vec3<f32> = dot(ray.dir, p) * ray.dir - p;
+        let closest_dist : f32 = length(closest_point);
+        if (closest_dist <= sphere.radius) {
+            let collision_times : vec2<f32> = ray_collision_times(ray, closest_point, sphere);
+            if (collision_times.x > 0.0) {
+                let normal : vec3<f32> = sphere_normal(sphere, ray, collision_times.x);
+                return vec4<f32>(normal, closest_dist);
+            } else if (collision_times.y > 0.0) {
+                let normal : vec3<f32> = sphere_normal(sphere, ray, collision_times.y);
+                return vec4<f32>(normal, closest_dist);
+            }
+        }
+    }
+    return vec4<f32>(0.0, 0.0, 0.0, 20000000.0);
+}
 
 fn to_color_int(val: f32, offset: u32) -> u32 {
     return (u32(clamp(255.0 * val, 0.0, 255.0)) & 255u) << offset;
@@ -97,7 +116,11 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
     let work_size : u32 = arrayLength(&output.colors) / 128u;
     for (var index : u32 = global_id.x * work_size; index < (global_id.x + 1u) * work_size; index = index + 1u) {
         let ray = camera_ray(index);
-        let ray_min_dist = ray_collides(ray);
-        output.colors[index].rgba = sky_color(ray.dir);
+        let ray_collision = ray_collides(ray);
+        if (ray_collision.w < 10000000.0) {
+             output.colors[index].rgba = to_color((ray_collision.xyz + vec3<f32>(1.0,1.0,1.0)) / 2.0);
+        } else {
+            output.colors[index].rgba = sky_color(ray.dir);
+        }
     }
 }
