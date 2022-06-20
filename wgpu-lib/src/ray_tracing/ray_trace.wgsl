@@ -61,7 +61,7 @@ fn ray_collision_times(ray: Ray, closest_point: vec3<f32>, sphere: Sphere) -> ve
     let dist_sq :f32 = pow(length(closest_point), 2);
     let dist_back :f32 = sqrt(rad_sq - dist_sq);
     let early_collision : vec3<f32> = closest_point + sphere.pos - dist_back * ray.dir;
-    let early_collision_time = dot(early_collision - ray.pos, ray.dir );
+    let early_collision_time = dot(early_collision - ray.pos, ray.dir);
     return  vec2<f32>(early_collision_time, early_collision_time+2*dist_back);
 }
 
@@ -71,6 +71,7 @@ fn sphere_normal(sphere: Sphere, ray:Ray, collision_time:f32) -> vec3<f32> {
 
 
 fn ray_collides(ray: Ray) -> vec4<f32> {
+    var collision = vec4<f32>(0.0, 0.0, 0.0, 20000000.0);
     for (var i : u32 = 0; i < arrayLength(&world.spheres); i++) {
         let sphere : Sphere = world.spheres[i];
         let p : vec3<f32> = (sphere.pos - ray.pos);
@@ -78,16 +79,16 @@ fn ray_collides(ray: Ray) -> vec4<f32> {
         let closest_dist : f32 = length(closest_point);
         if (closest_dist <= sphere.radius) {
             let collision_times : vec2<f32> = ray_collision_times(ray, closest_point, sphere);
-            if (collision_times.x > 0.0) {
+            if (collision_times.x > 0.0 && collision_times.x < collision.w) {
                 let normal : vec3<f32> = sphere_normal(sphere, ray, collision_times.x);
-                return vec4<f32>(normal, closest_dist);
-            } else if (collision_times.y > 0.0) {
+                collision = vec4<f32>(normal, collision_times.x);
+            } else if (collision_times.y > 0.0 && collision_times.y < collision.w) {
                 let normal : vec3<f32> = sphere_normal(sphere, ray, collision_times.y);
-                return vec4<f32>(normal, closest_dist);
+                collision = vec4<f32>(normal, collision_times.y);
             }
         }
     }
-    return vec4<f32>(0.0, 0.0, 0.0, 20000000.0);
+    return collision;
 }
 
 fn to_color_int(val: f32, offset: u32) -> u32 {
@@ -99,11 +100,27 @@ fn to_color(color: vec3<f32>) -> u32 {
 }
 
 let LIGHT_BLUE : vec3<f32> = vec3<f32>(0.5, 0.7, 1.0);
-let WHITE : vec3<f32> = vec3<f32>(1.0, 1.0, 1.0);
+let WHITE : vec3<f32> = vec3<f32>(1, 1, 1);
 
-fn sky_color(ray_dir: vec3<f32>) -> u32 {
-    let color = mix(LIGHT_BLUE, WHITE, vec3<f32>(ray_dir.y, ray_dir.y, ray_dir.y));
-    return to_color(color);
+fn sky_color(ray_dir: vec3<f32>) -> vec3<f32> {
+    return mix(LIGHT_BLUE, WHITE, vec3<f32>(ray_dir.y, ray_dir.y, ray_dir.y));
+}
+
+fn ray_color(ray: Ray) -> vec3<f32> {
+    let color : vec3<f32> = vec3<f32>(1,1,1);
+    for (var collision: u32 = 0; collision < 10; collision++) {
+        let ray_collision = ray_collides(ray);
+        if (ray_collision.w >= 10000000.0) {
+            return color * sky_color(ray.dir);
+        }
+        return (ray_collision.xyz + vec3<f32>(1,1,1)) / 2;
+    }
+    return vec3<f32>(0,0,0);
+}
+
+fn pixel_color(index: u32) -> vec3<f32> {
+    let ray = camera_ray(index);
+    return ray_color(ray);
 }
 
 @compute
@@ -115,12 +132,6 @@ fn main(@builtin(global_invocation_id) global_id : vec3<u32>) {
     }
     let work_size : u32 = arrayLength(&output.colors) / 128u;
     for (var index : u32 = global_id.x * work_size; index < (global_id.x + 1u) * work_size; index = index + 1u) {
-        let ray = camera_ray(index);
-        let ray_collision = ray_collides(ray);
-        if (ray_collision.w < 10000000.0) {
-             output.colors[index].rgba = to_color((ray_collision.xyz + vec3<f32>(1.0,1.0,1.0)) / 2.0);
-        } else {
-            output.colors[index].rgba = sky_color(ray.dir);
-        }
+            output.colors[index].rgba = to_color(pixel_color(index));
     }
 }
