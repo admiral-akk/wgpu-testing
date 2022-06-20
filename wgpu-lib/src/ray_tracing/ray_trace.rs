@@ -6,16 +6,13 @@ use crate::{
 
 use super::structs::{sphere::Sphere, vec3::Vec3};
 
-pub async fn ray_trace(gpu: &GPU, dimensions: &Dimensions) -> Vec<Color> {
+pub async fn ray_trace(gpu: &GPU, dimensions: &Dimensions, world: Vec<Sphere>) -> Vec<Color> {
     let camera = Camera::new(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 0.0, 1.0),
         dimensions,
         20.0,
     );
-
-    let mut world = Vec::new();
-    world.push(Sphere::new(Vec3::new(0.0, 0.0, 3.0), 1.0));
 
     let dimensions_buffer = gpu.write_buffer_init_struct(dimensions, Some("Dimensions"));
     let camera_buffer = gpu.write_buffer_init_struct(&camera, Some("Camera"));

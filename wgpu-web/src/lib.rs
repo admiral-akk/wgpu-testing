@@ -6,7 +6,10 @@ mod utils;
 use cfg_if::cfg_if;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{CanvasRenderingContext2d, Element, ImageData};
-use wgpu_lib::structs::{color::Color, dimensions::Dimensions};
+use wgpu_lib::{
+    ray_tracing::structs::{sphere::Sphere, vec3::Vec3},
+    structs::{color::Color, dimensions::Dimensions},
+};
 
 cfg_if! {
     // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -69,7 +72,10 @@ pub async fn run() -> Result<(), JsValue> {
     let canvas = document.create_element("canvas")?;
 
     let dimensions = Dimensions::new(400, 400);
-    let colors = wgpu_lib::get_ray_trace(&dimensions).await;
+    let mut world: Vec<Sphere> = Vec::new();
+    world.push(Sphere::new(Vec3::new(0.0, 0.0, 10.0), 1.0));
+
+    let colors = wgpu_lib::get_ray_trace(&dimensions, world).await;
     body.append_child(&canvas)?;
     canvas.set_attribute("width", &dimensions.width.to_string())?;
     canvas.set_attribute("height", &dimensions.height.to_string())?;

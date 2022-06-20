@@ -1,2 +1,2 @@
 pub mod ray_trace;
-mod structs;
+pub mod structs;
